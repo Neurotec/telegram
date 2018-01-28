@@ -117,7 +117,7 @@ defmodule Telegram.Api do
   @recv_timeout Application.get_env(:telegram, :recv_timeout, 60) * 1000
   @connect_timeout Application.get_env(:telegram, :connect_timeout, 5) * 1000
 
-  use Tesla, only: [:post], docs: false
+  use Tesla, only: [:post, :get], docs: false
 
   plug Tesla.Middleware.Tuples
   plug Tesla.Middleware.BaseUrl, @api_base_url
@@ -130,6 +130,30 @@ defmodule Telegram.Api do
   @type options :: Keyword.t
   @type request_result :: {:ok, term} | {:error, term}
 
+  @doc """
+  Return a file content
+
+  Reference: [BOT Api](https://core.telegram.org/bots/api#file)
+  """
+  @spec file(token, String.t, options) :: request_result
+  def file(token, file_path, options \\ []) do
+    options = do_json_markup(options)
+    do_file(get("/file/bot#{token}/#{file_path}"))
+  end
+
+  defp do_file({:ok, env}) do
+    case env.status do
+      200 ->
+        {:ok, env.body}
+      status ->
+        {:error, {:http_error, status}}
+    end
+  end
+  
+  defp do_file({:error, reason}) do
+    {:error, reason}
+  end
+  
   @doc """
   Send a Telegram Bot API request.
 
